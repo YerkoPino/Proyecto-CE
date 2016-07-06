@@ -1,4 +1,5 @@
 from pyevolve import *
+from sklearn import svm
 import os
 import re
 
@@ -104,6 +105,79 @@ for term in lista_term:
 
 	lista_term[term]["dfs"] = dfs
 
+matriz_datos = [None]*total_files
+for i in range(total_files):
+	matriz_datos[i] = [0]*500
+
+columna = 0
+
 for term in lista_term:
-	if lista_term[term]["dfs"]>=0.568870803164:
-		print term,lista_term[term]["dfs"]
+	if lista_term[term]["dfs"]>=0.504720846506:
+		for file in lista_term[term]:
+			if file!="dfs":
+				matriz_datos[file][columna] = lista_term[term][file]
+		columna += 1
+
+entrenamiento = matriz_datos[0:2448]+matriz_datos[3672:4672]
+validacion = matriz_datos[2448:3672]+matriz_datos[4672:5172]
+
+clase_entr = [0]*2448+[1]*1000
+clase_valid = [0]*1224+[1]*500
+
+def eval_func(chromosome):
+
+	suma = 0
+	for value in chromosome:
+		if value==1:
+			suma += 1
+
+	if suma>0:
+
+		entrenamiento_svm = [None]*3448
+		for i in range(3448):
+			entrenamiento_svm[i] = [0]*suma
+
+		validacion_svm = [None]*1724
+		for i in range(1724):
+			validacion_svm[i] = [0]*suma
+
+		col_valida = 0
+		col_valida_svm = 0
+		for value in chromosome:
+			if value==1:
+				for i in range(3448):
+					entrenamiento_svm[i][col_valida_svm] = entrenamiento[i][col_valida]
+				for i in range(1724):
+					validacion_svm[i][col_valida_svm] = validacion[i][col_valida]
+				col_valida_svm += 1
+			col_valida += 1
+
+		support = svm.SVC()
+		support.fit(entrenamiento_svm,clase_entr)
+
+		resultado = support.predict(validacion_svm)
+
+		aciertos = 0
+
+		for i in range(1724):
+			if resultado[i]==clase_valid[i]:
+				aciertos +=1
+
+		return (1.0-float(aciertos)/1724.0)
+	else:
+		return 0.5
+
+
+genome = G1DList.G1DList(500)
+genome.setParams(rangemin=0, rangemax=1)
+genome.evaluator.set(eval_func)
+ga = GSimpleGA.GSimpleGA(genome)
+ga.selector.set(Selectors.GRouletteWheel)
+ga.setMinimax(Consts.minimaxType["minimize"])
+ga.setGenerations(5)
+ga.setCrossoverRate(0.8)
+ga.setMutationRate(0.05)
+ga.setPopulationSize(10)
+
+ga.evolve(freq_stats=1)
+print ga.bestIndividual()
