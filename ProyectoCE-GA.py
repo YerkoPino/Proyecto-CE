@@ -1,7 +1,15 @@
 from pyevolve import *
 from sklearn import svm
+from time import time
 import os
 import re
+
+tiempo_inicial = time()
+
+alpha = 0.5
+mejor_fitness = -1
+mejor_acc = -1
+features = -1
 
 def borrar(cont):
 	c=""
@@ -125,6 +133,9 @@ clase_entr = [0]*2448+[1]*1000
 clase_valid = [0]*1224+[1]*500
 
 def eval_func(chromosome):
+	global mejor_fitness
+	global mejor_acc
+	global features
 
 	suma = 0
 	for value in chromosome:
@@ -163,7 +174,14 @@ def eval_func(chromosome):
 			if resultado[i]==clase_valid[i]:
 				aciertos +=1
 
-		return (1.0-float(aciertos)/1724.0)
+		fitness = alpha*(1.0-float(aciertos)/1724.0)+(1.0-alpha)*(float(suma)/500.0)
+
+		if fitness<mejor_fitness or mejor_fitness==-1:
+			features = suma
+			mejor_fitness = fitness
+			mejor_acc = 1.0-float(aciertos)/1724.0
+
+		return fitness
 	else:
 		return 0.5
 
@@ -172,6 +190,8 @@ genome = G1DList.G1DList(500)
 genome.setParams(rangemin=0, rangemax=1)
 genome.evaluator.set(eval_func)
 ga = GSimpleGA.GSimpleGA(genome)
+sqlite_adapter = DBAdapters.DBSQLite(identify="exga")
+ga.setDBAdapter(sqlite_adapter)
 ga.selector.set(Selectors.GRouletteWheel)
 ga.setMinimax(Consts.minimaxType["minimize"])
 ga.setGenerations(5)
@@ -180,4 +200,12 @@ ga.setMutationRate(0.05)
 ga.setPopulationSize(10)
 
 ga.evolve(freq_stats=1)
+
+tiempo_final = time()
+
 print ga.bestIndividual()
+print ""
+print "Mejor fitness:",mejor_fitness
+print "Error:",mejor_acc
+print "Features:",features
+print "Tiempo total:",(tiempo_final-tiempo_inicial)
