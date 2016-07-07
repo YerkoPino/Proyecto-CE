@@ -10,6 +10,7 @@ alpha = 0.5
 mejor_fitness = -1
 mejor_acc = -1
 features = -1
+feature_cons = 100
 
 def borrar(cont):
 	c=""
@@ -115,14 +116,15 @@ for term in lista_term:
 
 matriz_datos = [None]*total_files
 for i in range(total_files):
-	matriz_datos[i] = [0]*500
+	matriz_datos[i] = [0]*feature_cons
 
 columna = 0
 
 for term in lista_term:
-	if lista_term[term]["dfs"]>=0.504720846506:
+	if lista_term[term]["dfs"]>=0.512705948059:
 		for file in lista_term[term]:
 			if file!="dfs":
+				print columna
 				matriz_datos[file][columna] = lista_term[term][file]
 		columna += 1
 
@@ -174,7 +176,7 @@ def eval_func(chromosome):
 			if resultado[i]==clase_valid[i]:
 				aciertos +=1
 
-		fitness = alpha*(1.0-float(aciertos)/1724.0)+(1.0-alpha)*(float(suma)/500.0)
+		fitness = alpha*(1.0-float(aciertos)/1724.0)+(1.0-alpha)*(float(suma)/float(feature_cons))
 
 		if fitness<mejor_fitness or mejor_fitness==-1:
 			features = suma
@@ -186,7 +188,7 @@ def eval_func(chromosome):
 		return 0.5
 
 
-genome = G1DList.G1DList(500)
+genome = G1DList.G1DList(feature_cons)
 genome.setParams(rangemin=0, rangemax=1)
 genome.evaluator.set(eval_func)
 ga = GSimpleGA.GSimpleGA(genome)
@@ -194,10 +196,10 @@ sqlite_adapter = DBAdapters.DBSQLite(identify="exga")
 ga.setDBAdapter(sqlite_adapter)
 ga.selector.set(Selectors.GRouletteWheel)
 ga.setMinimax(Consts.minimaxType["minimize"])
-ga.setGenerations(5)
+ga.setGenerations(20)
 ga.setCrossoverRate(0.8)
-ga.setMutationRate(0.05)
-ga.setPopulationSize(10)
+ga.setMutationRate(0.08)
+ga.setPopulationSize(100)
 
 ga.evolve(freq_stats=1)
 

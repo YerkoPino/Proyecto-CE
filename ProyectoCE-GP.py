@@ -11,11 +11,12 @@ alpha = 0.5
 mejor_fitness = -1
 mejor_acc = -1
 features = -1
+features_cons = 100
 
 conjunto = [None]*32
 for i in range(32):
-   aux = [None]*500
-   for j in range(500):
+   aux = [None]*features_cons
+   for j in range(features_cons):
       aux[j] = random.randint(0,1)
    conjunto[i] = aux
 
@@ -123,12 +124,12 @@ for term in lista_term:
 
 matriz_datos = [None]*total_files
 for i in range(total_files):
-   matriz_datos[i] = [0]*500
+   matriz_datos[i] = [0]*features_cons
 
 columna = 0
 
 for term in lista_term:
-   if lista_term[term]["dfs"]>=0.504720846506:
+   if lista_term[term]["dfs"]>=0.512705948059:
       for file in lista_term[term]:
          if file!="dfs":
             matriz_datos[file][columna] = lista_term[term][file]
@@ -141,30 +142,30 @@ clase_entr = [0]*2448+[1]*1000
 clase_valid = [0]*1224+[1]*500
 
 def gp_and(a,b):
-   resultado = [None]*500
-   for i in range(500):
+   resultado = [None]*features_cons
+   for i in range(features_cons):
       resultado[i] = a[i] and b[i]
    return resultado
 def gp_or(a,b):
-   resultado = [None]*500
-   for i in range(500):
+   resultado = [None]*features_cons
+   for i in range(features_cons):
       resultado[i] = a[i] or b[i]
    return resultado
 def gp_xor(a,b):
-   resultado = [None]*500
-   for i in range(500):
+   resultado = [None]*features_cons
+   for i in range(features_cons):
       resultado[i] = a[i] ^ b[i]
    return resultado
 def gp_not(a):
-   resultado = [None]*500
-   for i in range(500):
+   resultado = [None]*features_cons
+   for i in range(features_cons):
       if not(a[i]):
          resultado[i] = 1
       else:
          resultado[i] = 0
    return resultado
-def gp_juntar_centro(a,b): return a[250:500]+b[0:250]
-def gp_juntar_extremo(a,b): return a[0:250]+b[250:500]
+def gp_juntar_centro(a,b): return a[50:100]+b[0:50]
+def gp_juntar_extremo(a,b): return a[0:50]+b[50:100]
 def obtener(): return conjunto[random.randint(0,31)]
 
 def eval_func(chromosome):
@@ -213,7 +214,7 @@ def eval_func(chromosome):
          if resultado[i]==clase_valid[i]:
             aciertos +=1
 
-      fitness = alpha*(1.0-float(aciertos)/1724.0)+(1.0-alpha)*(float(suma)/500.0)
+      fitness = alpha*(1.0-float(aciertos)/1724.0)+(1.0-alpha)*(float(suma)/float(features_cons))
 
       if fitness<mejor_fitness or mejor_fitness==-1:
          features = suma
@@ -237,10 +238,10 @@ def main_run():
                 gp_function_prefix = "gp")
 
    ga.setMinimax(Consts.minimaxType["minimize"])
-   ga.setGenerations(5)
+   ga.setGenerations(20)
    ga.setMutationRate(0.08)
-   ga.setCrossoverRate(1.0)
-   ga.setPopulationSize(10)
+   ga.setCrossoverRate(0.8)
+   ga.setPopulationSize(200)
    ga.evolve(freq_stats=1)
 
    tiempo_final = time()
